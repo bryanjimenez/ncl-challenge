@@ -1,0 +1,15 @@
+{   
+  "env": {"es6": true, "browser": true, "mocha":true},
+  "parser": "babel-eslint",
+
+  "globals": {"browser":"readonly" },
+
+  "rules": {
+    "no-use-before-define": "error",
+    "no-unused-vars": "warn",
+    "no-console": "warn",
+    "react/prop-types": "warn"
+  },
+
+  "extends": ["eslint:recommended", "plugin:react/recommended"]
+}
