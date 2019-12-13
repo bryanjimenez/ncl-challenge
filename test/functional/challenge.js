@@ -1,18 +1,19 @@
 import {expect} from 'chai';
+import {page} from "../pom/home.pom";
 
 describe('Guest explores Port of Departure', function(){
     it.skip("should zoom to selected port", function(){
         browser.url('https://www.ncl.com/');
 
-        const explore = browser.$('.navigationWrapper a[aria-label="Explore"]')
+        const explore = browser.$(page.exploreLinkSelector)
         explore.waitForDisplayed(2000);
         explore.click();
 
-        const port = browser.$('.drophover_menu .drophover_menu_content ul a[title="Ports"]');
+        const port = browser.$(page.portLinkSelector);
         port.waitForDisplayed(2000);
         port.click();
 
-        const search = browser.$('#searchbar');
+        const search = browser.$(page.searchBar);
         search.waitForDisplayed(3000);
         search.setValue('Honolulu');
         // browser.keys('Return');
@@ -21,22 +22,17 @@ describe('Guest explores Port of Departure', function(){
         // btn.waitForDisplayed(2000);
         // btn.click();
 
-        const result = browser.$('#searchArea > div.expanded-find-port > ul > li.ng-scope > a');
+        const result = browser.$(page.searchResult);
         result.waitForDisplayed(2000);
         result.click();
 
 
-        const departure = browser.$('#ports-map img[src="/resources/images/icons/pin-port-of-departure.png"]');
+        const departure = browser.$(page.departureMarker);
         departure.waitForDisplayed();
          
         //map zoomed to show selected port
         //port is on the middle of the map
         //port is displayed as port of departure
-
-        // browser.debug();
-        // browser.pause(10000);
-
-        expect(true).to.be.true;
     })
 });
 
@@ -45,15 +41,15 @@ describe('Guest explores shore excursions destinations', function(){
     it.skip("shore excursions page is present", function(){
         browser.url('https://www.ncl.com/');
 
-        const explore = browser.$('.navigationWrapper a[aria-label="Explore"]')
+        const explore = browser.$(page.exploreLinkSelector)
         explore.waitForDisplayed(2000);
         explore.click();
 
-        const port = browser.$('.drophover_menu .drophover_menu_content ul a[title="Shore Excursions"]');
+        const port = browser.$(page.excursionsLinkSelector);
         port.waitForDisplayed(2000);
         port.click();
 
-        const destination = browser.$('#search_destinations');
+        const destination = browser.$(page.searchButton);
         destination.waitForExist(2000);
         destination.click();
 
@@ -63,9 +59,6 @@ describe('Guest explores shore excursions destinations', function(){
         //Shore excursions page is present
         //Results are filtered by Alaska Cruises
         //Filter By Ports are only belong to “Alaska, British Columbia”
-
-        expect(true).to.be.true;
-        // browser.debug();
     })
 })
 
@@ -77,52 +70,55 @@ describe('Guest filters shore excursions results using price range', function(){
         const lower=0;
         const upper=30;
 
-        const explore = browser.$('.navigationWrapper a[aria-label="Explore"]')
+        const explore = browser.$(page.exploreLinkSelector)
         explore.waitForDisplayed(2000);
         explore.click();
 
-        const port = browser.$('.drophover_menu .drophover_menu_content ul a[title="Shore Excursions"]');
-        port.waitForDisplayed(2000);
+        const excursionLink = browser.$(page.excursionsLinkSelector);
+        excursionLink.waitForDisplayed(2000);
 
         try{
-            port.click();
+            excursionLink.click();
         }
         catch(e){
-        //<img usemap="#IPEMap" border="0" width="640" height="360" src="https://ips-invite.iperceptions.com/invitations/invitationsJS/0/s850/images/invitation1.png">
-            const close = browser.$('map[name="IPEMap"] area[alt="close"]');
-            close.click();
-
-            port.click();
+            const popupClose = browser.$(page.surveyPopupClose);
+            popupClose.click();
+            excursionLink.click();
         }
         
-
-        const find = browser.$('button[class~="search-submit"]');
+        const find = browser.$(page.findExcursionsBtn);
         find.waitForDisplayed(2000);
         find.click();
 
         // set price $0-30
         browser.url('https://www.ncl.com/shore-excursions/search?sort=searchWeight&perPage=12&priceRange='+lower+'+'+upper);
 
-        const results = browser.$$('ul.holders-list.ng-scope > li');
-        console.log(results.length);
+        
+        // result page navigation
+        let next = true;
+        while(next){
+            const nextPage = browser.$(page.excursionResultNextPage);
 
-        results.forEach(r=>{
-
-            const prices = r.$$('.details .price li');
-            // console.log(prices.length);
-            //[0-0] ADULT FROM: $30.00 USD
-            // console.log(prices[0].getText())
-            prices.forEach(p=>{
-                const text = p.getText();
-
-                const amount = Number(text.slice(text.indexOf('$')+1,text.indexOf('.')));
-                // console.log(amount);
-                expect(amount).to.be.at.least(lower)
-                expect(amount).to.be.at.most(upper)
+            const results = browser.$$(page.excursionResultList);
+            results.forEach(r=>{
+                const prices = r.$$('.details .price li');
+                prices.forEach(p=>{
+                    const text = p.getText();
+    
+                    const amount = Number(text.slice(text.indexOf('$')+1,text.indexOf('.')));
+                    // console.log(amount);
+                    expect(amount).to.be.at.least(lower)
+                    expect(amount).to.be.at.most(upper)
+                })
             })
 
-        })
-        
-        // browser.debug();
+            if(nextPage.isExisting()){
+                nextPage.click();
+                next=true;
+            }
+            else{
+                next = false;
+            }
+        }
     })
 })
