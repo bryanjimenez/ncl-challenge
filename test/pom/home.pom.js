@@ -13,7 +13,9 @@ export const page = {
     destinationMarker: 'img[src$="pin_destination.png"]',
 
     // shore-excursions
-    destinationInput: '#search_destinations_chosen > a.chosen-single',
+    loadingModal: '.modal-backdrop.fade',
+    destinationSearch: '#search_destinations_chosen > a.chosen-single',
+    destinationInput: 'input.chosen-search-input',
     findExcursionsBtn:'button[class~="search-submit"]',
 
     destinationFilter: '.filter-options a[title="Destination"] ~ .widget-items li',

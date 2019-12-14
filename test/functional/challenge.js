@@ -1,12 +1,15 @@
 import {expect} from 'chai';
 import {page} from "../pom/home.pom";
 
-describe('Guest explores Port of Departure', function(){
-    it("should zoom to selected port", function(){
-        browser.url('https://www.ncl.com/');
+const homePageUrl = 'https://www.ncl.com/';
 
-        const allAvailableDestinations = 32;
-        const portQuery = 'Honolulu';
+describe('Guest explores Port of Departure', function(){
+    const departureImgName = /pin-port-of-departure.png$/;
+    const allAvailableDestinations = 32;
+    const portQuery = 'Honolulu';
+
+    it("should zoom to selected port", function(){
+        browser.url(homePageUrl);
 
         const explore = browser.$(page.exploreLinkSelector)
         explore.waitForDisplayed(2000);
@@ -37,6 +40,11 @@ describe('Guest explores Port of Departure', function(){
 
         browser.$(page.departureMarker).waitForDisplayed();
 
+        //final map zoomed to show selected port
+        expect(browser.$$(page.destinationMarker)).to.have.lengthOf(0);
+    })
+
+    it('should display port on the middle of the map', function(){
         // map
         const mapRect = browser.execute(function(selec){
             const m = document.querySelector(selec);
@@ -49,25 +57,27 @@ describe('Guest explores Port of Departure', function(){
             return pin.getBoundingClientRect();
         },page.departureMarker);
 
-        const departure = browser.$$(page.departureMarker);
-         
-        //final map zoomed to show selected port
-        expect(browser.$$(page.destinationMarker)).to.have.lengthOf(0);
         //port is on the middle of the map
         expect(portPinRect.left+portPinRect.width/2).is.equal(mapRect.width/2);
+    })
+
+    it('should be displayed as port of departure', function(){
+        const departure = browser.$$(page.departureMarker);
+
         //port is displayed as port of departure
         departure.forEach(marker=>{
-            expect(marker.getAttribute('src')).to.match(/pin-port-of-departure.png$/);
+            expect(marker.getAttribute('src')).to.match(departureImgName);
         })
     })
 });
 
 
 describe('Guest explores shore excursions destinations', function(){
-    it("shore excursions page is present", function(){
-        browser.url('https://www.ncl.com/');
+    const destinationName = 'Alaska Cruises';
+    const enterKey = '\uE007';
 
-        const destinationName = 'Alaska Cruises';
+    it("should display shore excursions page", function(){
+        browser.url(homePageUrl);
 
         const explore = browser.$(page.exploreLinkSelector)
         explore.waitForDisplayed(2000);
@@ -85,16 +95,17 @@ describe('Guest explores shore excursions destinations', function(){
             port.click();
         }
 
-        const destinationSearch = browser.$(page.destinationInput);
+        const destinationSearch = browser.$(page.destinationSearch);
         destinationSearch.waitForDisplayed();
         destinationSearch.click();
 
         //Alaska Cruises
-        const search = browser.$('input.chosen-search-input');
-        search.setValue('Alaska Cruises\uE007');
+        const search = browser.$(page.destinationInput);
+        search.setValue(destinationName);
+        search.addValue(enterKey);
 
         //Loading modal
-        const loading = browser.$('.modal-backdrop.fade');
+        const loading = browser.$(page.loadingModal);
         loading.waitForExist(1000)
         loading.waitForExist(1000, true)
 
@@ -103,22 +114,29 @@ describe('Guest explores shore excursions destinations', function(){
         find.click();
 
         //Shore excursions page is present
-        expect(browser.getTitle()).to.equal('Alaska Cruises | Shore Excursions | Norwegian Cruise Line')
+        expect(browser.getTitle()).to.equal('Alaska Cruises | Shore Excursions | Norwegian Cruise Line');
+    });
+
+    it('should filter by Alaska Cruises', function(){
         //Results are filtered by Alaska Cruises
-        const filter = browser.$(page.destinationFilter)
+        const filter = browser.$(page.destinationFilter);
         expect(filter.getText()).to.equal(destinationName);
+    });
+
+    it.skip('should ...?', function(){
         //Filter By Ports are only belong to “Alaska, British Columbia”
         //TODO: can't find 'Alaska, British Columbia'
-    })
-})
+    });
+});
 
 describe('Guest filters shore excursions results using price range', function(){
-    it("should return only shore excursions within range", function(){
-        browser.url('https://www.ncl.com/');
+    const baseUrl = 'https://www.ncl.com/shore-excursions/search?sort=searchWeight&perPage=12&priceRange=';
+    // range
+    const lower=0;
+    const upper=30;
 
-        // range
-        const lower=0;
-        const upper=30;
+    it("should return only shore excursions within range", function(){
+        browser.url(homePageUrl);
 
         const explore = browser.$(page.exploreLinkSelector)
         explore.waitForDisplayed(2000);
@@ -141,7 +159,7 @@ describe('Guest filters shore excursions results using price range', function(){
         find.click();
 
         // set price $0-30
-        browser.url('https://www.ncl.com/shore-excursions/search?sort=searchWeight&perPage=12&priceRange='+lower+'+'+upper);
+        browser.url(baseUrl+lower+'+'+upper);
 
         
         // result page navigation
