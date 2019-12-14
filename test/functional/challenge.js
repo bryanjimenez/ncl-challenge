@@ -64,8 +64,10 @@ describe('Guest explores Port of Departure', function(){
 
 
 describe('Guest explores shore excursions destinations', function(){
-    it.skip("shore excursions page is present", function(){
+    it("shore excursions page is present", function(){
         browser.url('https://www.ncl.com/');
+
+        const destinationName = 'Alaska Cruises';
 
         const explore = browser.$(page.exploreLinkSelector)
         explore.waitForDisplayed(2000);
@@ -73,18 +75,40 @@ describe('Guest explores shore excursions destinations', function(){
 
         const port = browser.$(page.excursionsLinkSelector);
         port.waitForDisplayed(2000);
-        port.click();
 
-        const destination = browser.$(page.searchButton);
-        destination.waitForExist(2000);
-        destination.click();
+        try{
+            port.click();
+        }
+        catch(e){
+            const popupClose = browser.$(page.surveyPopupClose);
+            popupClose.click();
+            port.click();
+        }
+
+        const destinationSearch = browser.$(page.destinationInput);
+        destinationSearch.waitForDisplayed();
+        destinationSearch.click();
 
         //Alaska Cruises
+        const search = browser.$('input.chosen-search-input');
+        search.setValue('Alaska Cruises\uE007');
 
+        //Loading modal
+        const loading = browser.$('.modal-backdrop.fade');
+        loading.waitForExist(1000)
+        loading.waitForExist(1000, true)
+
+        const find = browser.$(page.findExcursionsBtn);
+        find.waitForDisplayed()
+        find.click();
 
         //Shore excursions page is present
+        expect(browser.getTitle()).to.equal('Alaska Cruises | Shore Excursions | Norwegian Cruise Line')
         //Results are filtered by Alaska Cruises
+        const filter = browser.$(page.destinationFilter)
+        expect(filter.getText()).to.equal(destinationName);
         //Filter By Ports are only belong to “Alaska, British Columbia”
+        //TODO: can't find 'Alaska, British Columbia'
     })
 })
 
