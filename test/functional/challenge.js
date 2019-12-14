@@ -2,8 +2,11 @@ import {expect} from 'chai';
 import {page} from "../pom/home.pom";
 
 describe('Guest explores Port of Departure', function(){
-    it.skip("should zoom to selected port", function(){
+    it("should zoom to selected port", function(){
         browser.url('https://www.ncl.com/');
+
+        const allAvailableDestinations = 32;
+        const portQuery = 'Honolulu';
 
         const explore = browser.$(page.exploreLinkSelector)
         explore.waitForDisplayed(2000);
@@ -11,28 +14,51 @@ describe('Guest explores Port of Departure', function(){
 
         const port = browser.$(page.portLinkSelector);
         port.waitForDisplayed(2000);
-        port.click();
+
+        try{
+            port.click();
+        }
+        catch(e){
+            const popupClose = browser.$(page.surveyPopupClose);
+            popupClose.click();
+            port.click();
+        }
+
+        //initial map NOT zoomed showing all available destinations
+        expect(browser.$$(page.destinationMarker)).to.have.lengthOf(allAvailableDestinations)
 
         const search = browser.$(page.searchBar);
         search.waitForDisplayed(3000);
-        search.setValue('Honolulu');
-        // browser.keys('Return');
+        search.setValue(portQuery);
         
-        // const btn = browser.$('#searchArea > div.type-find-port > form > div > span');
-        // btn.waitForDisplayed(2000);
-        // btn.click();
-
         const result = browser.$(page.searchResult);
         result.waitForDisplayed(2000);
         result.click();
 
+        browser.$(page.departureMarker).waitForDisplayed();
 
-        const departure = browser.$(page.departureMarker);
-        departure.waitForDisplayed();
+        // map
+        const mapRect = browser.execute(function(selec){
+            const m = document.querySelector(selec);
+            return m.getBoundingClientRect();
+        }, page.portMap)
+
+        // port
+        const portPinRect = browser.execute(function(selec){
+            const pin = document.querySelectorAll(selec)[0];
+            return pin.getBoundingClientRect();
+        },page.departureMarker);
+
+        const departure = browser.$$(page.departureMarker);
          
-        //map zoomed to show selected port
+        //final map zoomed to show selected port
+        expect(browser.$$(page.destinationMarker)).to.have.lengthOf(0);
         //port is on the middle of the map
+        expect(portPinRect.left+portPinRect.width/2).is.equal(mapRect.width/2);
         //port is displayed as port of departure
+        departure.forEach(marker=>{
+            expect(marker.getAttribute('src')).to.match(/pin-port-of-departure.png$/);
+        })
     })
 });
 
